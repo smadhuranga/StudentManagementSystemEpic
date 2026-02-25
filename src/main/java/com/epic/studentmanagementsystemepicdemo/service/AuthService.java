@@ -8,7 +8,6 @@ package com.epic.studentmanagementsystemepicdemo.service;
 
 import com.epic.studentmanagementsystemepicdemo.model.User;
 import com.epic.studentmanagementsystemepicdemo.repository.impl.UserRepository;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,10 +28,11 @@ public class AuthService {
 
     public String login(User user) {
         User dbUser = userRepository.findByUsername(user.getName());
-        if (dbUser != null && dbUser.getPassword().equals(user.getPassword())) {
-            return "User Login successfully";
+        if (!dbUser.getPassword().equals(user.getPassword())) {
+            throw new RuntimeException("Username or password is incurrect");
         }
-        throw new UsernameNotFoundException("Username or password is incorrect");
+        return "User Login successfully";
+
 
     }
 

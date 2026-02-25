@@ -6,7 +6,9 @@
 
 package com.epic.studentmanagementsystemepicdemo.repository.impl;
 
+import com.epic.studentmanagementsystemepicdemo.exception.ResourceNotFoundException;
 import com.epic.studentmanagementsystemepicdemo.model.Student;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -15,6 +17,12 @@ import java.util.List;
 
 @Repository
 public class StudentRepository {
+    private final JdbcTemplate jdbcTemplate;
+
+    public StudentRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     public RowMapper<Student> studentRowMapper = (rs, rowNum) -> {
         Student s = new Student();
         s.setId(rs.getInt("id"));
@@ -26,11 +34,7 @@ public class StudentRepository {
 
         return s;
     };
-    private final JdbcTemplate jdbcTemplate;
 
-    public StudentRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     public int saveStudent(Student s) {
         String sql = """
@@ -56,7 +60,11 @@ public class StudentRepository {
     public Student findById(int id) {
         String sql = "SELECT * FROM Student WHERE Id = ?";
 
-        return jdbcTemplate.queryForObject(sql, studentRowMapper, id);
+       try {
+           return jdbcTemplate.queryForObject(sql, studentRowMapper, id);
+       } catch (EmptyResultDataAccessException e) {
+           throw new ResourceNotFoundException("Student not found");
+       }
     }
 
     public int update(Student s) {
@@ -78,12 +86,20 @@ public class StudentRepository {
                 s.getEnrollmentDate(),
                 s.getId()
         );
+        if (rows == 0) {
+            throw new ResourceNotFoundException("Student not found");
+        }
         return rows;
     }
 
     public int delete(int id) {
         String sql = "DELETE FROM Student WHERE Id=?";
+        int rows = jdbcTemplate.update(sql, id);
 
-        return jdbcTemplate.update(sql, id);
+        if (rows == 0){
+            throw  new ResourceNotFoundException("Student not found");
+        }
+        return rows;
+
     }
 }

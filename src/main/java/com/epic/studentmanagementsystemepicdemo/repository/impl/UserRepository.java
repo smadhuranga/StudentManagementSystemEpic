@@ -6,7 +6,9 @@
 
 package com.epic.studentmanagementsystemepicdemo.repository.impl;
 
+import com.epic.studentmanagementsystemepicdemo.exception.ResourceNotFoundException;
 import com.epic.studentmanagementsystemepicdemo.model.User;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -29,8 +31,11 @@ public class UserRepository {
 
     public User findByUsername(String username) {
         String sql = "select * from User where Name = ?";
-
-        return jdbcTemplate.queryForObject(sql, userRowMapper, username);
+        try {
+            return jdbcTemplate.queryForObject(sql, userRowMapper, username);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ResourceNotFoundException("User not found");
+        }
     }
 
     public int saveUser(User user) {
